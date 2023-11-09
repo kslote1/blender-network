@@ -1,0 +1,39 @@
+import bpy
+from mathutils import Vector
+
+# Select all objects to find the bounds
+bpy.ops.object.select_all(action='SELECT')
+
+# Get the bounding box of the selected objects
+selected_objects = bpy.context.selected_objects
+min_point = Vector((min([obj.bound_box[0][0] for obj in selected_objects]),
+                   min([obj.bound_box[0][1] for obj in selected_objects]),
+                   min([obj.bound_box[0][2] for obj in selected_objects])))
+
+max_point = Vector((max([obj.bound_box[6][0] for obj in selected_objects]),
+                   max([obj.bound_box[6][1] for obj in selected_objects]),
+                   max([obj.bound_box[6][2] for obj in selected_objects])))
+
+# Find the center of the bounding box
+center = (min_point + max_point) / 2
+
+# The distance from the center to set the camera
+distance = max(max_point - min_point) * 1.1  # Adjust 1.1 to control the margin
+
+# Set the camera position
+camera = bpy.data.objects['Camera']
+camera.location = center + Vector((0, 0, distance))
+
+# Point the camera to the center
+look_at = center - camera.location
+camera.rotation_euler = look_at.to_track_quat('Z', 'Y').to_euler()
+
+# Set the camera to orthographic and adjust the scale
+camera.data.type = 'ORTHO'
+camera.data.ortho_scale = max(max_point - min_point) * 2.1  # Adjust 1.1 for margin
+
+# Assuming 'Camera' is the name of your camera
+camera = bpy.data.objects['Camera']
+
+# Flip the viewport by rotating 180 degrees around the X axis
+camera.rotation_euler[0] += 180.0 * (3.1415926 / 180.0)
